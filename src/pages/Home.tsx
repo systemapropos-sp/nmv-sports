@@ -359,44 +359,9 @@ export default function Home({ searchQuery = '' }: HomeProps) {
           {/* Odds Table / Cards */}
           <div className="flex-1 min-w-0">
             <div className="bg-white rounded-lg shadow-table overflow-hidden" style={{ minHeight: '400px' }}>
-              {/* Column headers */}
               <div className="overflow-x-auto">
                 <div className="min-w-[900px]">
-                  {/* Sticky Table Header with CÓDIGO column */}
-                  <div
-                    className="odds-header grid sticky top-0 z-30 border-b-2 border-gray-200"
-                    style={{
-                      gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px',
-                      height: '40px',
-                    }}
-                  >
-                    {tableColumns.map((col) => {
-                      const colLabel = (t as unknown as Record<string, string>)[col.label] || col.label;
-                      return (
-                        <div
-                          key={col.key}
-                          className={cn(
-                            'odds-header whitespace-nowrap flex items-center',
-                            col.align === 'center' && 'justify-center',
-                            col.align === 'right' && 'justify-end',
-                            col.align === 'left' && 'justify-start'
-                          )}
-                          style={{ width: col.width }}
-                        >
-                          <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
-                            {colLabel}
-                            {columnTooltips[col.key] && (
-                              <span title={columnTooltips[col.key]} className="cursor-help text-gray-400 hover:text-gray-600">
-                                <Info size={12} />
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Game content */}
+                  {/* Game content - each sport section has its own column headers */}
                   <AnimatePresence mode="wait">
                     {filteredGames.length === 0 ? (
                       <motion.div
@@ -431,17 +396,50 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                             />
                           ))
                         ) : (
-                          // Single sport view -- just cards, no sport grouping
-                          filteredGames.map((game, idx) => (
-                            <GameCard
-                              key={game.id}
-                              game={game}
-                              index={idx}
-                              isHovered={hoveredGameId === game.id}
-                              onHover={setHoveredGameId}
-                              bestWorstMap={bestWorstMap}
-                            />
-                          ))
+                          // Single sport view -- column header + cards
+                          <>
+                            {/* Column headers for single sport */}
+                            <div
+                              className="grid border-b border-gray-200 bg-white"
+                              style={{
+                                gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px',
+                              }}
+                            >
+                              {tableColumns.map((col) => {
+                                const colLabel = (t as unknown as Record<string, string>)[col.label] || col.label;
+                                return (
+                                  <div
+                                    key={col.key}
+                                    className={cn(
+                                      'px-2 py-1.5 text-gray-500 font-semibold text-xs uppercase tracking-wider whitespace-nowrap flex items-center',
+                                      col.align === 'center' && 'justify-center',
+                                      col.align === 'right' && 'justify-end',
+                                      col.align === 'left' && 'justify-start'
+                                    )}
+                                  >
+                                    <div className={cn('flex items-center gap-0.5', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
+                                      {colLabel}
+                                      {columnTooltips[col.key] && (
+                                        <span title={columnTooltips[col.key]} className="cursor-help text-gray-300 hover:text-gray-500">
+                                          <Info size={10} />
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {filteredGames.map((game, idx) => (
+                              <GameCard
+                                key={game.id}
+                                game={game}
+                                index={idx}
+                                isHovered={hoveredGameId === game.id}
+                                onHover={setHoveredGameId}
+                                bestWorstMap={bestWorstMap}
+                              />
+                            ))}
+                          </>
                         )}
                       </div>
                     )}

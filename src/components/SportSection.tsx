@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type { Game, Sport } from '@/types/game';
 import GameCard from './GameCard';
 import {
@@ -10,6 +9,8 @@ import {
   TennisIcon,
 } from '@/components/icons/SportIcons';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { Info } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const sportIcons: Record<Sport, React.FC<{ className?: string; size?: number }>> = {
   MLB: MlbIcon,
@@ -21,21 +22,33 @@ const sportIcons: Record<Sport, React.FC<{ className?: string; size?: number }>>
 };
 
 const sportEmojis: Record<Sport, string> = {
-  MLB: '⚾',
-  NBA: '🏀',
-  NFL: '🏈',
-  NHL: '🏒',
-  Soccer: '⚽',
-  Tennis: '🎾',
+  MLB: '\u26BE',
+  NBA: '\uD83C\uDFC0',
+  NFL: '\uD83C\uDFC8',
+  NHL: '\uD83C\uDFD2',
+  Soccer: '\u26BD',
+  Tennis: '\uD83C\uDFBE',
 };
 
-const sportFullNames: Record<Sport, string> = {
-  MLB: 'Major League Baseball',
-  NBA: 'National Basketball Association',
-  NFL: 'National Football League',
-  NHL: 'National Hockey League',
-  Soccer: 'Fútbol Internacional',
-  Tennis: 'ATP Tennis',
+const tableColumns = [
+  { key: 'code', label: 'code', width: '70px', align: 'center' as const },
+  { key: 'gameInfo', label: 'game', width: '200px', align: 'left' as const },
+  { key: 'ml', label: 'ml', width: '90px', align: 'right' as const },
+  { key: 'total', label: 'total', width: '90px', align: 'center' as const },
+  { key: 'ou', label: 'overUnder', width: '90px', align: 'right' as const },
+  { key: 'rl', label: 'rl', width: '90px', align: 'right' as const },
+  { key: 'yn', label: 'yn', width: '90px', align: 'right' as const },
+  { key: 'srl', label: 'srl', width: '90px', align: 'right' as const },
+  { key: 'solo', label: 'solo', width: '90px', align: 'right' as const },
+];
+
+const columnTooltips: Record<string, string> = {
+  ml: 'Money Line',
+  ou: 'Over/Under',
+  rl: 'Run Line',
+  yn: 'Yes/No',
+  srl: 'Secondary Run Line',
+  solo: 'Solo',
 };
 
 interface SportSectionProps {
@@ -57,60 +70,52 @@ export default function SportSection({
   showSeparator,
   startIndex,
 }: SportSectionProps) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const Icon = sportIcons[sport];
 
   return (
-    <div className="mb-4">
-      {/* Premium Sport Section Header */}
-      <motion.div
-        initial={{ opacity: 0, x: -8 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="relative overflow-hidden rounded-[10px] mb-4"
+    <div className="mb-2">
+      {/* Clean Sport Header */}
+      <div className="flex items-center gap-2 px-1 py-2 mb-1">
+        <span className="text-base">{sportEmojis[sport]}</span>
+        {Icon && <Icon size={18} className="text-gray-500" />}
+        <h2 className="text-gray-800 font-bold text-sm">{sport}</h2>
+        <span className="text-gray-400 text-xs">
+          — {games.length} {lang === 'es' ? (games.length === 1 ? 'juego' : 'juegos') : (games.length === 1 ? 'game' : 'games')}
+        </span>
+      </div>
+
+      {/* Column headers per sport */}
+      <div
+        className="grid border-b border-gray-200 bg-white"
         style={{
-          background: 'linear-gradient(90deg, #0C1B2E 0%, #1A56DB 100%)',
-          padding: '14px 20px',
+          gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px',
         }}
       >
-        <div className="flex items-center justify-between">
-          {/* Left: Icon + Sport name + subtitle */}
-          <div className="flex items-center gap-3">
-            {/* Sport icon circle */}
+        {tableColumns.map((col) => {
+          const colLabel = (t as unknown as Record<string, string>)[col.label] || col.label;
+          return (
             <div
-              className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-lg flex-shrink-0"
-              style={{ fontSize: '14px' }}
+              key={col.key}
+              className={cn(
+                'px-2 py-1.5 text-gray-500 font-semibold text-xs uppercase tracking-wider whitespace-nowrap flex items-center',
+                col.align === 'center' && 'justify-center',
+                col.align === 'right' && 'justify-end',
+                col.align === 'left' && 'justify-start'
+              )}
             >
-              {sportEmojis[sport]}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-white font-bold text-[1.1rem] leading-tight">
-                  {sport}
-                </h2>
-                {/* Game count badge */}
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-500 text-[#0C1B2E] text-xs font-bold">
-                  {games.length} {lang === 'es' ? (games.length === 1 ? 'juego activo' : 'juegos activos') : (games.length === 1 ? 'Active Game' : 'Active Games')}
-                </span>
+              <div className={cn('flex items-center gap-0.5', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
+                {colLabel}
+                {columnTooltips[col.key] && (
+                  <span title={columnTooltips[col.key]} className="cursor-help text-gray-300 hover:text-gray-500">
+                    <Info size={10} />
+                  </span>
+                )}
               </div>
-              <p className="text-white/60 text-xs mt-0.5">
-                {sportFullNames[sport]}
-              </p>
             </div>
-          </div>
-
-          {/* Right: Sport icon component */}
-          {Icon && <Icon size={28} className="text-white/80 flex-shrink-0" />}
-        </div>
-
-        {/* Subtle gradient separator line at bottom */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-[2px]"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, #f59e0b 30%, #f59e0b 70%, transparent 100%)',
-          }}
-        />
-      </motion.div>
+          );
+        })}
+      </div>
 
       {/* Game Cards */}
       {games.map((game, idx) => (
@@ -124,15 +129,14 @@ export default function SportSection({
         />
       ))}
 
-      {/* Thick separator between sports (only in "All" view) */}
+      {/* Separator between sports */}
       {showSeparator && (
         <div
-          className="my-4"
+          className="my-3"
           style={{
-            height: '6px',
-            background: '#0C1B2E',
-            borderRadius: '3px',
-            margin: '16px 0',
+            height: '4px',
+            background: '#e2e8f0',
+            borderRadius: '2px',
           }}
         />
       )}
