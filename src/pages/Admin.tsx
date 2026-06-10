@@ -75,7 +75,9 @@ const sportBadgeStyle = (sport: Sport) => {
 export default function Admin() {
   const navigate = useNavigate();
   const { lang, t } = useLanguage();
-  const isAuthenticated = localStorage.getItem('quickline-admin-auth') === 'true';
+  const authRaw = localStorage.getItem('quickline-admin-auth');
+  const auth = authRaw ? JSON.parse(authRaw) : null;
+  const isAuthenticated = auth?.authenticated === true && auth?.expires > Date.now();
 
   const {
     games,
