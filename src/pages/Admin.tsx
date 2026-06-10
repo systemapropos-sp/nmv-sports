@@ -262,7 +262,7 @@ export default function Admin() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `quickline-games-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `nmv-sports-games-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('CSV exported');
@@ -291,7 +291,7 @@ export default function Admin() {
           <div className="flex items-center gap-3">
             <Shield size={20} className="text-[#1A56DB]" />
             <div className="flex items-center gap-2">
-              <span className="text-white font-semibold text-sm">QuickLine</span>
+              <span className="text-white font-semibold text-sm">NMV SPORTS</span>
               <ChevronRightIcon size={12} className="text-gray-500" />
               <span className="text-gray-300 text-sm font-medium">Dashboard</span>
             </div>

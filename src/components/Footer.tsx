@@ -21,13 +21,13 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2">
               <LogoIcon size={24} className="text-blue" />
-              <span className="text-white text-lg font-bold">QuickLine</span>
+              <span className="text-white text-lg font-bold">NMV SPORTS</span>
             </div>
             <p className="mt-2 text-sm text-gray-400">
-              Professional Sports Odds, Simplified.
+              Live Sports Betting Lines -- MLB, NBA, NFL, NHL, Soccer & Tennis.
             </p>
             <p className="mt-4 text-xs text-gray-500">
-              &copy; 2025 QuickLine. All rights reserved.
+              &copy; 2025 NMV SPORTS. All rights reserved.
             </p>
           </div>
 

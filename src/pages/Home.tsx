@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid,
@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Download,
   SlidersHorizontal,
+  Settings,
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useGames } from '@/hooks/useGames';
@@ -22,11 +23,16 @@ import {
   NhlIcon,
   SoccerIcon,
   TennisIcon,
-  TeamLogoPlaceholder,
 } from '@/components/icons/SportIcons';
+import SportSelector, { getFavoriteSports, saveFavoriteSports } from '@/components/SportSelector';
+import SportSection from '@/components/SportSection';
+import GameCard from '@/components/GameCard';
 
-const sports: { key: Sport | 'All'; label: string; Icon: React.FC<{ className?: string; size?: number }> }[] = [
+const SPORT_ORDER: Sport[] = ['MLB', 'NBA', 'NFL', 'NHL', 'Soccer', 'Tennis'];
+
+const sports: { key: Sport | 'All' | 'My Sports'; label: string; Icon: React.FC<{ className?: string; size?: number }> }[] = [
   { key: 'All', label: 'ALL', Icon: LayoutGrid },
+  { key: 'My Sports', label: 'MY SPORTS', Icon: LayoutGrid },
   { key: 'MLB', label: 'MLB', Icon: MlbIcon },
   { key: 'NBA', label: 'NBA', Icon: NbaIcon },
   { key: 'NFL', label: 'NFL', Icon: NflIcon },
@@ -54,10 +60,10 @@ const tableColumns = [
 ];
 
 const columnTooltips: Record<string, string> = {
-  ml: 'Money Line — straight win odds',
-  ou: 'Over/Under — total points odds',
-  rl: 'Run Line — spread odds',
-  yn: 'Yes/No — proposition odds',
+  ml: 'Money Line -- straight win odds',
+  ou: 'Over/Under -- total points odds',
+  rl: 'Run Line -- spread odds',
+  yn: 'Yes/No -- proposition odds',
   srl: 'Secondary Run Line',
   solo: 'Solo odds',
 };
@@ -90,18 +96,19 @@ function getBestWorstOdds(games: Game[], column: keyof Game['odds'], subKey: str
   return { best: sorted[0]?.id ?? null, worst: sorted[sorted.length - 1]?.id ?? null };
 }
 
-function formatOddsValue(val: number | string): string {
-  if (typeof val === 'number') {
-    return val > 0 ? `+${val}` : `${val}`;
-  }
-  return val;
+interface HomeProps {
+  searchQuery?: string;
 }
 
-export default function Home() {
+export default function Home({ searchQuery = '' }: HomeProps) {
   const { games, getGameCountBySport } = useGames();
-  const [activeSport, setActiveSport] = useState<Sport | 'All'>('All');
+  const [activeSport, setActiveSport] = useState<Sport | 'All' | 'My Sports'>('All');
   const [activeDate, setActiveDate] = useState<DateFilter>('today');
   const [hoveredGameId, setHoveredGameId] = useState<string | null>(null);
+
+  // Favorite sports
+  const [favoriteSports, setFavoriteSports] = useState<Sport[]>(() => getFavoriteSports());
+  const [sportSelectorOpen, setSportSelectorOpen] = useState(false);
 
   // Quick filters
   const [bestOddsOnly, setBestOddsOnly] = useState(false);
@@ -109,16 +116,38 @@ export default function Home() {
   const [liveOnly, setLiveOnly] = useState(false);
 
   // QR Code
-  const [qrUrl, setQrUrl] = useState('https://quickline.odds');
+  const [qrUrl, setQrUrl] = useState('https://nmvsports.odds');
   const [qrGenerated, setQrGenerated] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   // Short link
-  const [shortLink, setShortLink] = useState('qln.co/a3x9');
+  const [shortLink, setShortLink] = useState('nmv.co/a3x9');
   const [copied, setCopied] = useState(false);
 
+  // Save favorite sports to localStorage whenever they change
+  useEffect(() => {
+    saveFavoriteSports(favoriteSports);
+  }, [favoriteSports]);
+
   const filteredGames = useMemo(() => {
-    let filtered = activeSport === 'All' ? games : games.filter((g) => g.sport === activeSport);
+    let filtered = [...games];
+
+    // Sport filter
+    if (activeSport === 'My Sports') {
+      filtered = filtered.filter((g) => favoriteSports.includes(g.sport));
+    } else if (activeSport !== 'All') {
+      filtered = filtered.filter((g) => g.sport === activeSport);
+    }
+
+    // Search filter (by team name)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (g) =>
+          g.awayTeam.name.toLowerCase().includes(q) ||
+          g.homeTeam.name.toLowerCase().includes(q)
+      );
+    }
 
     if (hideFinished) {
       filtered = filtered.filter((g) => g.status !== 'final');
@@ -128,7 +157,27 @@ export default function Home() {
     }
 
     return filtered;
-  }, [games, activeSport, hideFinished, liveOnly]);
+  }, [games, activeSport, favoriteSports, searchQuery, hideFinished, liveOnly]);
+
+  // Group games by sport for "All" and "My Sports" views
+  const groupedGames = useMemo(() => {
+    if (activeSport !== 'All' && activeSport !== 'My Sports') {
+      // Single sport view -- no grouping needed
+      return null;
+    }
+
+    const groups: { sport: Sport; games: Game[] }[] = [];
+    const sportsToShow = activeSport === 'My Sports' ? favoriteSports : SPORT_ORDER;
+
+    sportsToShow.forEach((sport) => {
+      const sportGames = filteredGames.filter((g) => g.sport === sport);
+      if (sportGames.length > 0) {
+        groups.push({ sport, games: sportGames });
+      }
+    });
+
+    return groups;
+  }, [filteredGames, activeSport, favoriteSports]);
 
   const bestWorstMap = useMemo(() => {
     const map: Record<string, { best: string | null; worst: string | null }> = {};
@@ -156,7 +205,7 @@ export default function Home() {
     for (let i = 0; i < 4; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setShortLink(`qln.co/${code}`);
+    setShortLink(`nmv.co/${code}`);
     setCopied(false);
   }, []);
 
@@ -166,7 +215,6 @@ export default function Home() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = shortLink;
       document.body.appendChild(ta);
@@ -184,7 +232,7 @@ export default function Home() {
     const url = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'quickline-qr.png';
+    a.download = 'nmv-sports-qr.png';
     a.click();
   }, []);
 
@@ -202,6 +250,17 @@ export default function Home() {
     setLiveOnly(false);
   }, []);
 
+  const handleFavoriteChange = (sports: Sport[]) => {
+    setFavoriteSports(sports);
+  };
+
+  // Get display count for a sport tab
+  const getTabCount = (key: Sport | 'All' | 'My Sports') => {
+    if (key === 'All') return games.length;
+    if (key === 'My Sports') return games.filter((g) => favoriteSports.includes(g.sport)).length;
+    return getGameCountBySport(key);
+  };
+
   return (
     <div className="flex flex-col">
       {/* Sub-Navigation */}
@@ -213,7 +272,7 @@ export default function Home() {
           {/* Row 1: Sport Tabs */}
           <div className="flex items-center gap-1 h-11 overflow-x-auto scrollbar-hide">
             {sports.map((sport) => {
-              const count = getGameCountBySport(sport.key);
+              const count = getTabCount(sport.key);
               const isActive = activeSport === sport.key;
               return (
                 <button
@@ -239,6 +298,16 @@ export default function Home() {
                 </button>
               );
             })}
+
+            {/* Settings icon for sport selector */}
+            <button
+              onClick={() => setSportSelectorOpen(true)}
+              className="ml-1 p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+              title="Select favorite sports"
+              aria-label="Select favorite sports"
+            >
+              <Settings size={16} />
+            </button>
           </div>
 
           {/* Row 2: Date Tabs + Game Count */}
@@ -278,73 +347,95 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-[1440px] mx-auto w-full px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Odds Table */}
+          {/* Odds Table / Cards */}
           <div className="flex-1 min-w-0">
             <div className="bg-white rounded-lg shadow-table overflow-hidden" style={{ minHeight: '400px' }}>
+              {/* Column headers */}
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px]">
-                  <thead>
-                    <tr className="bg-gray-100 border-b-2 border-gray-200" style={{ height: '40px' }}>
-                      {tableColumns.map((col) => (
-                        <th
-                          key={col.key}
-                          className={cn(
-                            'py-2 px-3 text-[0.6875rem] font-medium uppercase tracking-wider text-gray-600 whitespace-nowrap',
-                            col.align === 'center' && 'text-center',
-                            col.align === 'right' && 'text-right',
-                            col.align === 'left' && 'text-left'
+                <div className="min-w-[800px]">
+                  {/* Table Header */}
+                  <div
+                    className="grid bg-gray-100 border-b-2 border-gray-200"
+                    style={{
+                      gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px',
+                      height: '40px',
+                    }}
+                  >
+                    {tableColumns.map((col) => (
+                      <div
+                        key={col.key}
+                        className={cn(
+                          'py-2 px-3 text-[0.6875rem] font-medium uppercase tracking-wider text-gray-600 whitespace-nowrap flex items-center',
+                          col.align === 'center' && 'justify-center',
+                          col.align === 'right' && 'justify-end',
+                          col.align === 'left' && 'justify-start'
+                        )}
+                        style={{ width: col.width, letterSpacing: '0.05em' }}
+                      >
+                        <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
+                          {col.label}
+                          {columnTooltips[col.key] && (
+                            <span title={columnTooltips[col.key]} className="cursor-help text-gray-400 hover:text-gray-600">
+                              <Info size={12} />
+                            </span>
                           )}
-                          style={{ width: col.width, letterSpacing: '0.05em' }}
-                        >
-                          <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
-                            {col.label}
-                            {columnTooltips[col.key] && (
-                              <span title={columnTooltips[col.key]} className="cursor-help text-gray-400 hover:text-gray-600">
-                                <Info size={12} />
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <AnimatePresence mode="wait">
-                      {filteredGames.length === 0 ? (
-                        <tr key="empty">
-                          <td colSpan={9} className="text-center py-16">
-                            <motion.div
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="flex flex-col items-center gap-3"
-                            >
-                              <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="text-gray-300">
-                                <rect x="25" y="20" width="70" height="80" rx="6" stroke="currentColor" strokeWidth="2" />
-                                <path d="M40 40h40M40 55h30M40 70h35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                                <circle cx="80" cy="85" r="14" stroke="currentColor" strokeWidth="2" />
-                                <path d="M73 85h14M80 78v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                              </svg>
-                              <p className="text-base text-gray-500 font-medium">No games match your filters</p>
-                              <p className="text-sm text-gray-400">Try adjusting your sport or date selection</p>
-                            </motion.div>
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredGames.map((game, idx) => (
-                          <GameRows
-                            key={game.id}
-                            game={game}
-                            index={idx}
-                            isHovered={hoveredGameId === game.id}
-                            onHover={setHoveredGameId}
-                            bestWorstMap={bestWorstMap}
-                          />
-                        ))
-                      )}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Game content */}
+                  <AnimatePresence mode="wait">
+                    {filteredGames.length === 0 ? (
+                      <motion.div
+                        key="empty"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex flex-col items-center gap-3 py-16"
+                      >
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className="text-gray-300">
+                          <rect x="25" y="20" width="70" height="80" rx="6" stroke="currentColor" strokeWidth="2" />
+                          <path d="M40 40h40M40 55h30M40 70h35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <circle cx="80" cy="85" r="14" stroke="currentColor" strokeWidth="2" />
+                          <path d="M73 85h14M80 78v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                        <p className="text-base text-gray-500 font-medium">No games match your filters</p>
+                        <p className="text-sm text-gray-400">Try adjusting your sport or date selection</p>
+                      </motion.div>
+                    ) : (
+                      <div className="p-2">
+                        {groupedGames && (activeSport === 'All' || activeSport === 'My Sports') ? (
+                          // Grouped by sport view
+                          groupedGames.map((group, groupIdx) => (
+                            <SportSection
+                              key={group.sport}
+                              sport={group.sport}
+                              games={group.games}
+                              bestWorstMap={bestWorstMap}
+                              hoveredGameId={hoveredGameId}
+                              onHover={setHoveredGameId}
+                              showSeparator={activeSport === 'All' && groupIdx < groupedGames.length - 1}
+                              startIndex={groupedGames.slice(0, groupIdx).reduce((acc, g) => acc + g.games.length, 0)}
+                            />
+                          ))
+                        ) : (
+                          // Single sport view -- just cards, no sport grouping
+                          filteredGames.map((game, idx) => (
+                            <GameCard
+                              key={game.id}
+                              game={game}
+                              index={idx}
+                              isHovered={hoveredGameId === game.id}
+                              onHover={setHoveredGameId}
+                              bestWorstMap={bestWorstMap}
+                            />
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </div>
@@ -362,7 +453,7 @@ export default function Home() {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <QrCode size={18} className="text-blue" />
-                    <h3 className="text-base font-semibold">Share QuickLine</h3>
+                    <h3 className="text-base font-semibold">Share NMV SPORTS</h3>
                   </div>
                   <p className="text-xs text-gray-400 mb-3">Scan to view on mobile</p>
 
@@ -495,238 +586,19 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Sport Selector Modal */}
+      <SportSelector
+        open={sportSelectorOpen}
+        onClose={() => setSportSelectorOpen(false)}
+        selected={favoriteSports}
+        onChange={handleFavoriteChange}
+      />
     </div>
   );
 }
 
 /* ─── Sub-components ─── */
-
-function GameRows({
-  game,
-  index,
-  isHovered,
-  onHover,
-  bestWorstMap,
-}: {
-  game: Game;
-  index: number;
-  isHovered: boolean;
-  onHover: (id: string | null) => void;
-  bestWorstMap: Record<string, { best: string | null; worst: string | null }>;
-}) {
-  const isLive = game.status === 'live';
-  const isFinal = game.status === 'final';
-  const awayId = `${game.id}-away`;
-  const homeId = `${game.id}-home`;
-
-  return (
-    <motion.tr
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.25,
-        delay: index * 0.02,
-        ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
-      }}
-      onMouseEnter={() => onHover(game.id)}
-      onMouseLeave={() => onHover(null)}
-      className="cursor-pointer"
-    >
-      <td colSpan={9} className="p-0">
-        {/* Away Team Row */}
-        <div
-          className={cn(
-            'grid transition-colors duration-150',
-            isHovered ? 'bg-[#EBF0FE]' : 'bg-white'
-          )}
-          style={{ gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px' }}
-        >
-          {/* Game Info */}
-          <div className="py-2.5 px-3 min-h-[48px] flex flex-col justify-center">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500 font-normal">
-                {new Date(game.gameTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-              </span>
-              {isLive && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-live-red text-white text-[0.625rem] font-bold uppercase">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-live-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1 w-1 bg-white" />
-                  </span>
-                  LIVE
-                </span>
-              )}
-              {isFinal && (
-                <span className="text-[0.625rem] text-gray-500 font-medium uppercase">FINAL</span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <TeamLogoPlaceholder teamName={game.awayTeam.name} size={20} />
-              <span className="text-[0.8125rem] font-medium text-black">@{game.awayTeam.name}</span>
-            </div>
-            {isLive && game.liveScore && (
-              <div className="text-xs font-semibold text-live-red mt-0.5">
-                {game.awayTeam.name} {game.liveScore.away} - {game.liveScore.home} {game.homeTeam.name}
-              </div>
-            )}
-          </div>
-
-          {/* Rot# */}
-          <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
-            <span className="text-xs text-gray-500">{game.awayTeam.rotationNumber}</span>
-          </div>
-
-          {/* M.L. */}
-          <OddsCell
-            value={game.odds.moneyLine.away}
-            highlightKey={`moneyLine-away-${awayId}`}
-            bestWorst={bestWorstMap['moneyLine-away']}
-          />
-
-          {/* Total */}
-          <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
-            <span className="text-[0.8125rem] font-medium tabular-nums">{game.odds.total}</span>
-          </div>
-
-          {/* O/U */}
-          <OddsCell
-            value={game.odds.overUnder.over}
-            highlightKey={`overUnder-over-${awayId}`}
-            bestWorst={bestWorstMap['overUnder-over']}
-          />
-
-          {/* RL */}
-          <OddsCell
-            value={game.odds.runLine.away}
-            highlightKey={`runLine-away-${awayId}`}
-            bestWorst={null}
-          />
-
-          {/* Y-N */}
-          <OddsCell
-            value={game.odds.yesNo.yes}
-            highlightKey={`yesNo-yes-${awayId}`}
-            bestWorst={null}
-          />
-
-          {/* SRL */}
-          <OddsCell
-            value={game.odds.srl.away}
-            highlightKey={`srl-away-${awayId}`}
-            bestWorst={bestWorstMap['srl-away']}
-          />
-
-          {/* Solo */}
-          <OddsCell
-            value={game.odds.solo.away}
-            highlightKey={`solo-away-${awayId}`}
-            bestWorst={bestWorstMap['solo-away']}
-          />
-        </div>
-
-        {/* Home Team Row */}
-        <div
-          className={cn(
-            'grid border-b transition-colors duration-150',
-            isHovered ? 'bg-[#EBF0FE]' : 'bg-[#F8FAFC]',
-          )}
-          style={{
-            gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px',
-            borderColor: '#E2E8F0',
-          }}
-        >
-          {/* Game Info */}
-          <div className="py-2.5 px-3 min-h-[48px] flex items-center gap-1.5">
-            <TeamLogoPlaceholder teamName={game.homeTeam.name} size={20} />
-            <span className="text-[0.8125rem] font-medium text-black">{game.homeTeam.name}</span>
-          </div>
-
-          {/* Rot# */}
-          <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
-            <span className="text-xs text-gray-500">{game.homeTeam.rotationNumber}</span>
-          </div>
-
-          {/* M.L. */}
-          <OddsCell
-            value={game.odds.moneyLine.home}
-            highlightKey={`moneyLine-home-${homeId}`}
-            bestWorst={bestWorstMap['moneyLine-home']}
-          />
-
-          {/* Total */}
-          <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
-            <span className="text-[0.8125rem] font-medium tabular-nums">{game.odds.total}</span>
-          </div>
-
-          {/* O/U */}
-          <OddsCell
-            value={game.odds.overUnder.under}
-            highlightKey={`overUnder-under-${homeId}`}
-            bestWorst={bestWorstMap['overUnder-under']}
-          />
-
-          {/* RL */}
-          <OddsCell
-            value={game.odds.runLine.home}
-            highlightKey={`runLine-home-${homeId}`}
-            bestWorst={null}
-          />
-
-          {/* Y-N */}
-          <OddsCell
-            value={game.odds.yesNo.no}
-            highlightKey={`yesNo-no-${homeId}`}
-            bestWorst={null}
-          />
-
-          {/* SRL */}
-          <OddsCell
-            value={game.odds.srl.home}
-            highlightKey={`srl-home-${homeId}`}
-            bestWorst={bestWorstMap['srl-home']}
-          />
-
-          {/* Solo */}
-          <OddsCell
-            value={game.odds.solo.home}
-            highlightKey={`solo-home-${homeId}`}
-            bestWorst={bestWorstMap['solo-home']}
-          />
-        </div>
-      </td>
-    </motion.tr>
-  );
-}
-
-function OddsCell({
-  value,
-  highlightKey,
-  bestWorst,
-}: {
-  value: number | string;
-  highlightKey: string;
-  bestWorst: { best: string | null; worst: string | null } | null;
-}) {
-  const isBest = bestWorst?.best === highlightKey;
-  const isWorst = bestWorst?.worst === highlightKey;
-
-  return (
-    <div
-      className={cn(
-        'py-2.5 px-3 min-h-[48px] flex items-center justify-end transition-all duration-200',
-        isBest && 'border-l-2 border-l-green bg-[rgba(34,197,94,0.06)]',
-        isWorst && 'border-l-2 border-l-red bg-[rgba(239,68,68,0.04)]',
-      )}
-    >
-      <div className="flex items-center gap-1">
-        {isBest && <span className="w-1.5 h-1.5 rounded-full bg-green" />}
-        <span className="text-[0.8125rem] font-semibold tabular-nums text-black">
-          {formatOddsValue(value)}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function ToggleRow({
   label,

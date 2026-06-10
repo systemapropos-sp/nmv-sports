@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Menu, X } from 'lucide-react';
+import { Settings, Menu, X, Search } from 'lucide-react';
 import { LogoIcon } from './icons/SportIcons';
 import { cn } from '@/lib/utils';
 
@@ -11,8 +11,19 @@ const navLinks = [
   { label: 'News', href: '#', active: false },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  onSearch?: (query: string) => void;
+}
+
+export default function Navbar({ onSearch }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    onSearch?.(value);
+  };
 
   return (
     <header
@@ -30,9 +41,25 @@ export default function Navbar() {
             className="text-white font-bold tracking-tight"
             style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', letterSpacing: '-0.02em' }}
           >
-            QuickLine
+            NMV SPORTS
           </span>
         </Link>
+
+        {/* Center - Search Bar (desktop) */}
+        {onSearch && (
+          <div className="hidden md:flex flex-1 max-w-xs mx-6">
+            <div className="relative w-full">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchValue}
+                onChange={handleSearchChange}
+                placeholder="Search teams..."
+                className="w-full h-8 pl-8 pr-3 text-xs bg-white/10 border border-white/10 rounded-md text-white placeholder:text-gray-400 focus:outline-none focus:bg-white/15 focus:border-white/25 transition-colors"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Center - Nav Links (desktop) */}
         <nav className="hidden md:flex items-center gap-1">
@@ -82,6 +109,19 @@ export default function Navbar() {
           className="md:hidden absolute top-14 left-0 right-0 py-4 px-6"
           style={{ background: 'linear-gradient(180deg, #0F2340 0%, #0C1B2E 100%)' }}
         >
+          {/* Mobile Search */}
+          {onSearch && (
+            <div className="relative mb-3">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchValue}
+                onChange={handleSearchChange}
+                placeholder="Search teams..."
+                className="w-full h-9 pl-8 pr-3 text-sm bg-white/10 border border-white/10 rounded-md text-white placeholder:text-gray-400 focus:outline-none focus:bg-white/15 focus:border-white/25 transition-colors"
+              />
+            </div>
+          )}
           <nav className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link

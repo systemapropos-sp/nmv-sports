@@ -222,7 +222,7 @@ export default function Login() {
                 letterSpacing: '-0.02em',
               }}
             >
-              QuickLine
+              NMV SPORTS
             </span>
           </Link>
 
@@ -516,7 +516,7 @@ export default function Login() {
         className="py-4 px-6 relative z-10"
       >
         <div className="max-w-[420px] mx-auto flex items-center justify-center gap-2">
-          <span className="text-xs font-medium text-[#94A3B8]">QuickLine</span>
+          <span className="text-xs font-medium text-[#94A3B8]">NMV SPORTS</span>
           <span className="text-xs text-[#CBD5E1]">&#183;</span>
           <span className="text-xs text-[#94A3B8]">&copy; 2025</span>
           <span className="text-xs text-[#CBD5E1]">&#183;</span>

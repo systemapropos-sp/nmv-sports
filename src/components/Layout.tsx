@@ -4,12 +4,13 @@ import Footer from './Footer';
 
 interface LayoutProps {
   children: ReactNode;
+  onSearch?: (query: string) => void;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, onSearch }: LayoutProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      <Navbar />
+      <Navbar onSearch={onSearch} />
       {/* Spacer for fixed header */}
       <div className="h-14" />
       {/* Hero accent line */}
