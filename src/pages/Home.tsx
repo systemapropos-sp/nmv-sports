@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid,
@@ -10,8 +10,6 @@ import {
   RefreshCw,
   Download,
   SlidersHorizontal,
-  TrendingUp,
-  TrendingDown,
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useGames } from '@/hooks/useGames';
@@ -67,7 +65,7 @@ const columnTooltips: Record<string, string> = {
 function getBestWorstOdds(games: Game[], column: keyof Game['odds'], subKey: string) {
   const values: { id: string; val: number }[] = [];
   games.forEach((g) => {
-    const oddsVal = (g.odds as Record<string, unknown>)[column];
+    const oddsVal = (g.odds as unknown as Record<string, unknown>)[column];
     if (oddsVal && typeof oddsVal === 'object' && oddsVal !== null) {
       const sub = (oddsVal as Record<string, unknown>)[subKey];
       if (typeof sub === 'number') {
@@ -97,12 +95,6 @@ function formatOddsValue(val: number | string): string {
     return val > 0 ? `+${val}` : `${val}`;
   }
   return val;
-}
-
-function getNumericValue(val: number | string): number {
-  if (typeof val === 'number') return val;
-  const match = val.match(/-?\d+/);
-  return match ? parseInt(match[0], 10) : 0;
 }
 
 export default function Home() {
@@ -608,7 +600,6 @@ function GameRows({
             value={game.odds.runLine.away}
             highlightKey={`runLine-away-${awayId}`}
             bestWorst={null}
-            isString
           />
 
           {/* Y-N */}
@@ -679,7 +670,6 @@ function GameRows({
             value={game.odds.runLine.home}
             highlightKey={`runLine-home-${homeId}`}
             bestWorst={null}
-            isString
           />
 
           {/* Y-N */}
@@ -712,12 +702,10 @@ function OddsCell({
   value,
   highlightKey,
   bestWorst,
-  isString = false,
 }: {
   value: number | string;
   highlightKey: string;
   bestWorst: { best: string | null; worst: string | null } | null;
-  isString?: boolean;
 }) {
   const isBest = bestWorst?.best === highlightKey;
   const isWorst = bestWorst?.worst === highlightKey;

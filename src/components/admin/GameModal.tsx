@@ -168,12 +168,12 @@ export default function GameModal({ open, onClose, onSave, editGame }: GameModal
           no: form.ynNo === '' ? 0 : Number(form.ynNo),
         },
         srl: {
-          away: form.srlAway === '' ? 0 : Number(form.srlAway),
-          home: form.srlHome === '' ? 0 : Number(form.srlHome),
+          away: form.srlAway === '' ? '+0.5 -150' : form.srlAway,
+          home: form.srlHome === '' ? '-0.5 +130' : form.srlHome,
         },
         solo: {
-          away: form.soloAway === '' ? 0 : Number(form.soloAway),
-          home: form.soloHome === '' ? 0 : Number(form.soloHome),
+          away: form.soloAway === '' ? '3.5' : form.soloAway,
+          home: form.soloHome === '' ? '3.5' : form.soloHome,
         },
       },
     };

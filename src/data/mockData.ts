@@ -19,10 +19,10 @@ function createGame(
   runLineHome: string,
   yesNoYes: number,
   yesNoNo: number,
-  srlAway: number,
-  srlHome: number,
-  soloAway: number,
-  soloHome: number,
+  srlAway: string | number,
+  srlHome: string | number,
+  soloAway: string | number,
+  soloHome: string | number,
   liveScore?: { away: number; home: number },
 ): Game {
   return {
@@ -39,8 +39,8 @@ function createGame(
       overUnder: { over: overOdds, under: underOdds },
       runLine: { away: runLineAway, home: runLineHome },
       yesNo: { yes: yesNoYes, no: yesNoNo },
-      srl: { away: srlAway, home: srlHome },
-      solo: { away: soloAway, home: soloHome },
+      srl: { away: String(srlAway), home: String(srlHome) },
+      solo: { away: String(soloAway), home: String(soloHome) },
     },
     liveScore,
   };
