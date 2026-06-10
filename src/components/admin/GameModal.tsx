@@ -168,12 +168,12 @@ export default function GameModal({ open, onClose, onSave, editGame }: GameModal
           no: form.ynNo === '' ? 0 : Number(form.ynNo),
         },
         srl: {
-          away: form.srlAway || '+0.5 -150',
-          home: form.srlHome || '-0.5 +130',
+          away: form.srlAway === '' ? '+0.5 -150' : form.srlAway,
+          home: form.srlHome === '' ? '-0.5 +130' : form.srlHome,
         },
         solo: {
-          away: form.soloAway || '3.5',
-          home: form.soloHome || '3.5',
+          away: form.soloAway === '' ? '3.5' : form.soloAway,
+          home: form.soloHome === '' ? '3.5' : form.soloHome,
         },
       },
     };
@@ -461,40 +461,44 @@ export default function GameModal({ open, onClose, onSave, editGame }: GameModal
                     <div>
                       <Label className="text-xs text-gray-600 mb-1.5 block">SRL Away</Label>
                       <Input
+                        type="number"
                         value={form.srlAway}
                         onChange={e => update('srlAway', e.target.value)}
                         className="h-10"
-                        placeholder="+0.5 -150"
+                        placeholder="+105"
                       />
                     </div>
                     {/* SRL Home */}
                     <div>
                       <Label className="text-xs text-gray-600 mb-1.5 block">SRL Home</Label>
                       <Input
+                        type="number"
                         value={form.srlHome}
                         onChange={e => update('srlHome', e.target.value)}
                         className="h-10"
-                        placeholder="-0.5 +130"
+                        placeholder="-125"
                       />
                     </div>
                     {/* Solo Away */}
                     <div>
                       <Label className="text-xs text-gray-600 mb-1.5 block">Solo Away</Label>
                       <Input
+                        type="number"
                         value={form.soloAway}
                         onChange={e => update('soloAway', e.target.value)}
                         className="h-10"
-                        placeholder="3.5"
+                        placeholder="-160"
                       />
                     </div>
                     {/* Solo Home */}
                     <div>
                       <Label className="text-xs text-gray-600 mb-1.5 block">Solo Home</Label>
                       <Input
+                        type="number"
                         value={form.soloHome}
                         onChange={e => update('soloHome', e.target.value)}
                         className="h-10"
-                        placeholder="3.5"
+                        placeholder="+140"
                       />
                     </div>
                   </div>

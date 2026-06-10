@@ -40,7 +40,24 @@ export interface AdminCredentials {
   password: string;
 }
 
-// API-related types
+// API response types
+export interface Outcome {
+  name: string;
+  price: number;
+  point?: number;
+}
+
+export interface ApiMarket {
+  key: string;
+  outcomes: Outcome[];
+}
+
+export interface ApiBookmaker {
+  key: string;
+  title: string;
+  markets: Record<string, ApiMarket>;
+}
+
 export interface ApiGame {
   id: string;
   sport_key: string;
@@ -48,22 +65,5 @@ export interface ApiGame {
   commence_time: string;
   home_team: string;
   away_team: string;
-  bookmakers: Bookmaker[];
-}
-
-export interface Bookmaker {
-  key: string;
-  title: string;
-  markets: Record<string, Market>;
-}
-
-export interface Market {
-  key: string;
-  outcomes: Outcome[];
-}
-
-export interface Outcome {
-  name: string;
-  price: number;
-  point?: number;
+  bookmakers: ApiBookmaker[];
 }
