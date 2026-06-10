@@ -7,6 +7,12 @@ import type { Game, Sport } from '@/types/game';
 const ADMIN_STORAGE_KEY = 'quickline-admin-games';
 const USE_API_KEY = 'quickline-use-api';
 
+const sortByTime = (games: Game[]) => {
+  return [...games].sort((a, b) =>
+    new Date(a.gameTime).getTime() - new Date(b.gameTime).getTime()
+  );
+};
+
 export function useGames() {
   // Toggle between API and mock data
   const [useApi, setUseApi] = useState(() => {
@@ -37,7 +43,8 @@ export function useGames() {
       return Array.from(apiMap.values());
     }
 
-    return apiGames.length > 0 ? apiGames : generateMockGames();
+    const result = apiGames.length > 0 ? apiGames : generateMockGames();
+    return sortByTime(result);
   }, [useApi, adminGames, apiGames]);
 
   const toggleApi = useCallback(() => {
@@ -81,8 +88,8 @@ export function useGames() {
   }, [setAdminGames]);
 
   const getGamesBySport = useCallback((sport: Sport | 'All') => {
-    if (sport === 'All') return games;
-    return games.filter(g => g.sport === sport);
+    const filtered = sport === 'All' ? games : games.filter(g => g.sport === sport);
+    return sortByTime(filtered);
   }, [games]);
 
   const getGameCountBySport = useCallback((sport: Sport | 'All') => {

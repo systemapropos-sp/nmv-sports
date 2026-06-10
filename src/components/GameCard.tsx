@@ -1,7 +1,17 @@
 import { motion } from 'framer-motion';
-import type { Game } from '@/types/game';
+import type { Game, Sport } from '@/types/game';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/i18n/LanguageContext';
+import Countdown from './Countdown';
+
+const sportAccentColors: Record<Sport, string> = {
+  MLB: '#1A56DB',
+  NBA: '#D97706',
+  NFL: '#DC2626',
+  NHL: '#06B6D4',
+  Soccer: '#16A34A',
+  Tennis: '#7C3AED',
+};
 
 interface GameCardProps {
   game: Game;
@@ -65,6 +75,8 @@ export default function GameCard({ game, index, isHovered, onHover, bestWorstMap
   // Bold time styling
   const timeColor = isLive ? '#DC2626' : '#0C1B2E';
 
+  const accentColor = sportAccentColors[game.sport];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -76,14 +88,13 @@ export default function GameCard({ game, index, isHovered, onHover, bestWorstMap
       }}
       onMouseEnter={() => onHover(game.id)}
       onMouseLeave={() => onHover(null)}
-      className="cursor-pointer"
+      className={cn(
+        'cursor-pointer border border-gray-300 rounded-xl mb-3 overflow-hidden bg-white',
+        'shadow-md hover:shadow-lg transition-shadow duration-200'
+      )}
       style={{
-        border: '1.5px solid #E2E8F0',
-        borderRadius: '12px',
-        marginBottom: '12px',
-        overflow: 'hidden',
-        background: 'white',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        borderLeftWidth: '3px',
+        borderLeftColor: accentColor,
       }}
     >
       {/* Away Team Row */}
@@ -126,6 +137,7 @@ export default function GameCard({ game, index, isHovered, onHover, bestWorstMap
             {isFinal && (
               <span className="text-[0.625rem] text-gray-500 font-medium uppercase">{t.final}</span>
             )}
+            <Countdown targetTime={game.gameTime} />
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span

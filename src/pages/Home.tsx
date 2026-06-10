@@ -371,7 +371,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                     }}
                   >
                     {tableColumns.map((col) => {
-                      const colLabel = (t as Record<string, string>)[col.label] || col.label;
+                      const colLabel = (t as unknown as Record<string, string>)[col.label] || col.label;
                       return (
                         <div
                           key={col.key}
