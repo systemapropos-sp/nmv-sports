@@ -731,7 +731,7 @@ export default function Admin() {
       <GameModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditGame(null); }}
-        game={editGame}
+        editGame={editGame}
         onSave={handleSaveGame}
       />
 
@@ -740,6 +740,8 @@ export default function Admin() {
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setDeleteTarget(null); }}
         onConfirm={handleConfirmDelete}
+        awayTeam={deleteTarget?.awayTeam?.name || ''}
+        homeTeam={deleteTarget?.homeTeam?.name || ''}
       />
     </Layout>
   );
