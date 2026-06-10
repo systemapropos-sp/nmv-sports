@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid,
@@ -10,13 +10,15 @@ import {
   RefreshCw,
   Download,
   SlidersHorizontal,
-  TrendingUp,
-  TrendingDown,
+  Wifi,
+  WifiOff,
+  AlertTriangle,
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useGames } from '@/hooks/useGames';
 import type { Sport, DateFilter, Game } from '@/types/game';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   MlbIcon,
   NbaIcon,
@@ -67,7 +69,7 @@ const columnTooltips: Record<string, string> = {
 function getBestWorstOdds(games: Game[], column: keyof Game['odds'], subKey: string) {
   const values: { id: string; val: number }[] = [];
   games.forEach((g) => {
-    const oddsVal = (g.odds as Record<string, unknown>)[column];
+    const oddsVal = ((g.odds as unknown) as Record<string, unknown>)[column];
     if (oddsVal && typeof oddsVal === 'object' && oddsVal !== null) {
       const sub = (oddsVal as Record<string, unknown>)[subKey];
       if (typeof sub === 'number') {
@@ -99,14 +101,26 @@ function formatOddsValue(val: number | string): string {
   return val;
 }
 
-function getNumericValue(val: number | string): number {
-  if (typeof val === 'number') return val;
-  const match = val.match(/-?\d+/);
-  return match ? parseInt(match[0], 10) : 0;
+function formatLastUpdated(date: Date | null): string {
+  if (!date) return 'Never';
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 export default function Home() {
-  const { games, getGameCountBySport } = useGames();
+  const {
+    games,
+    apiLoading,
+    apiError,
+    lastUpdated,
+    refreshApi,
+    isUsingFallback,
+    useApi,
+  } = useGames();
+
   const [activeSport, setActiveSport] = useState<Sport | 'All'>('All');
   const [activeDate, setActiveDate] = useState<DateFilter>('today');
   const [hoveredGameId, setHoveredGameId] = useState<string | null>(null);
@@ -157,6 +171,11 @@ export default function Home() {
 
     return map;
   }, [filteredGames]);
+
+  const gameCountBySport = useCallback((sport: Sport | 'All') => {
+    if (sport === 'All') return games.length;
+    return games.filter(g => g.sport === sport).length;
+  }, [games]);
 
   const generateShortLink = useCallback(() => {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -210,6 +229,86 @@ export default function Home() {
     setLiveOnly(false);
   }, []);
 
+  // Skeleton rows for loading state
+  const SkeletonRows = useCallback(() => (
+    <>
+      {Array.from({ length: 6 }).map((_, idx) => (
+        <tr key={`skel-${idx}`}>
+          <td colSpan={9} className="p-0">
+            <div
+              className="grid bg-white"
+              style={{ gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px' }}
+            >
+              <div className="py-2.5 px-3 min-h-[48px] flex flex-col justify-center gap-1">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
+                <Skeleton className="h-3 w-6" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
+                <Skeleton className="h-4 w-8" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-6" />
+              </div>
+            </div>
+            <div
+              className="grid border-b bg-[#F8FAFC]"
+              style={{
+                gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px',
+                borderColor: '#E2E8F0',
+              }}
+            >
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center">
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
+                <Skeleton className="h-3 w-6" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-center">
+                <Skeleton className="h-4 w-8" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-10" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="py-2.5 px-3 min-h-[48px] flex items-center justify-end">
+                <Skeleton className="h-4 w-6" />
+              </div>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
+  ), []);
+
   return (
     <div className="flex flex-col">
       {/* Sub-Navigation */}
@@ -221,7 +320,7 @@ export default function Home() {
           {/* Row 1: Sport Tabs */}
           <div className="flex items-center gap-1 h-11 overflow-x-auto scrollbar-hide">
             {sports.map((sport) => {
-              const count = getGameCountBySport(sport.key);
+              const count = gameCountBySport(sport.key);
               const isActive = activeSport === sport.key;
               return (
                 <button
@@ -288,6 +387,61 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Odds Table */}
           <div className="flex-1 min-w-0">
+            {/* API Status Bar */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {useApi && !isUsingFallback && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green/10 text-green text-xs font-medium">
+                    <Wifi size={12} />
+                    <span>Connected to Live Odds</span>
+                  </div>
+                )}
+                {useApi && isUsingFallback && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-medium">
+                    <WifiOff size={12} />
+                    <span>Using cached data</span>
+                  </div>
+                )}
+                {!useApi && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-medium">
+                    <span>Mock data mode</span>
+                  </div>
+                )}
+                {lastUpdated && (
+                  <span className="text-[0.6875rem] text-gray-400">
+                    Updated {formatLastUpdated(lastUpdated)}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={refreshApi}
+                disabled={apiLoading}
+                className={cn(
+                  'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all duration-150',
+                  apiLoading && 'opacity-50 cursor-not-allowed'
+                )}
+                title="Refresh odds"
+              >
+                <RefreshCw size={12} className={cn(apiLoading && 'animate-spin')} />
+                Refresh
+              </button>
+            </div>
+
+            {/* Error Banner */}
+            <AnimatePresence>
+              {apiError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs"
+                >
+                  <AlertTriangle size={14} className="shrink-0" />
+                  <span>{apiError} — showing cached data</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="bg-white rounded-lg shadow-table overflow-hidden" style={{ minHeight: '400px' }}>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px]">
@@ -318,7 +472,13 @@ export default function Home() {
                   </thead>
                   <tbody>
                     <AnimatePresence mode="wait">
-                      {filteredGames.length === 0 ? (
+                      {apiLoading ? (
+                        <tr key="loading">
+                          <td colSpan={9}>
+                            <SkeletonRows />
+                          </td>
+                        </tr>
+                      ) : filteredGames.length === 0 ? (
                         <tr key="empty">
                           <td colSpan={9} className="text-center py-16">
                             <motion.div
@@ -712,7 +872,7 @@ function OddsCell({
   value,
   highlightKey,
   bestWorst,
-  isString = false,
+  isString: _isString = false,
 }: {
   value: number | string;
   highlightKey: string;

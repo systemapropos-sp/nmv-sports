@@ -1,44 +1,84 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import type { Game, Sport } from '@/types/game';
+import { useOddsApi } from './useOddsApi';
 import { generateMockGames } from '@/data/mockData';
+import type { Game, Sport } from '@/types/game';
 
-const STORAGE_KEY = 'quickline-games';
+const ADMIN_STORAGE_KEY = 'quickline-admin-games';
+const USE_API_KEY = 'quickline-use-api';
 
 export function useGames() {
-  const [games, setGames] = useLocalStorage<Game[]>(STORAGE_KEY, generateMockGames());
+  // Toggle between API and mock data
+  const [useApi, setUseApi] = useState(() => {
+    const stored = localStorage.getItem(USE_API_KEY);
+    return stored ? JSON.parse(stored) : true;
+  });
+
+  const { games: apiGames, loading: apiLoading, error: apiError, lastUpdated, refresh: refreshApi, isUsingFallback } = useOddsApi(useApi);
+
+  // Admin overrides stored in localStorage
+  const [adminGames, setAdminGames] = useLocalStorage<Game[]>(ADMIN_STORAGE_KEY, []);
+
+  // Keep useApi state in sync with localStorage
+  useEffect(() => {
+    localStorage.setItem(USE_API_KEY, JSON.stringify(useApi));
+  }, [useApi]);
+
+  // Combined games: API data + admin overrides
+  const games = useMemo(() => {
+    if (!useApi) return adminGames.length > 0 ? adminGames : generateMockGames();
+
+    // If admin has made changes, those override API data for specific games
+    if (adminGames.length > 0) {
+      const apiMap = new Map(apiGames.map(g => [g.id, g]));
+      adminGames.forEach(ag => {
+        apiMap.set(ag.id, ag);
+      });
+      return Array.from(apiMap.values());
+    }
+
+    return apiGames.length > 0 ? apiGames : generateMockGames();
+  }, [useApi, adminGames, apiGames]);
+
+  const toggleApi = useCallback(() => {
+    setUseApi((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem(USE_API_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   const addGame = useCallback((game: Game) => {
-    setGames(prev => [...prev, game]);
-  }, [setGames]);
+    setAdminGames(prev => [...prev, game]);
+  }, [setAdminGames]);
 
   const updateGame = useCallback((id: string, updates: Partial<Game>) => {
-    setGames(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
-  }, [setGames]);
+    setAdminGames(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+  }, [setAdminGames]);
 
   const deleteGame = useCallback((id: string) => {
-    setGames(prev => prev.filter(g => g.id !== id));
-  }, [setGames]);
+    setAdminGames(prev => prev.filter(g => g.id !== id));
+  }, [setAdminGames]);
 
   const moveGameUp = useCallback((id: string) => {
-    setGames(prev => {
+    setAdminGames(prev => {
       const idx = prev.findIndex(g => g.id === id);
       if (idx <= 0) return prev;
       const next = [...prev];
       [next[idx], next[idx - 1]] = [next[idx - 1], next[idx]];
       return next;
     });
-  }, [setGames]);
+  }, [setAdminGames]);
 
   const moveGameDown = useCallback((id: string) => {
-    setGames(prev => {
+    setAdminGames(prev => {
       const idx = prev.findIndex(g => g.id === id);
       if (idx === -1 || idx >= prev.length - 1) return prev;
       const next = [...prev];
       [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
       return next;
     });
-  }, [setGames]);
+  }, [setAdminGames]);
 
   const getGamesBySport = useCallback((sport: Sport | 'All') => {
     if (sport === 'All') return games;
@@ -50,12 +90,20 @@ export function useGames() {
   }, [getGamesBySport]);
 
   const resetToDefault = useCallback(() => {
-    setGames(generateMockGames());
-  }, [setGames]);
+    setAdminGames([]);
+    localStorage.removeItem('quickline-api-cache');
+  }, [setAdminGames]);
 
   return {
     games,
-    setGames,
+    apiLoading,
+    apiError,
+    lastUpdated,
+    useApi,
+    toggleApi,
+    isUsingFallback,
+    refreshApi,
+    setAdminGames,
     addGame,
     updateGame,
     deleteGame,
