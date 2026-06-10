@@ -75,17 +75,7 @@ const sportBadgeStyle = (sport: Sport) => {
 export default function Admin() {
   const navigate = useNavigate();
   const { lang, t } = useLanguage();
-  // Parse auth data from localStorage (stored as JSON object with 'authenticated' field)
-  const isAuthenticated = (() => {
-    const auth = localStorage.getItem('quickline-admin-auth');
-    if (!auth) return false;
-    try {
-      const parsed = JSON.parse(auth);
-      return parsed.authenticated === true && parsed.expires && parsed.expires > Date.now();
-    } catch {
-      return false;
-    }
-  })();
+  const isAuthenticated = localStorage.getItem('quickline-admin-auth') === 'true';
 
   const {
     games,
@@ -310,13 +300,7 @@ export default function Admin() {
 
   const globalIndex = (pageIdx: number) => (safePage - 1) * PAGE_SIZE + pageIdx + 1;
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50">
-        <div className="text-gray-400 text-sm">Redirecting to login...</div>
-      </div>
-    );
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <Layout>
@@ -756,8 +740,8 @@ export default function Admin() {
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setDeleteTarget(null); }}
         onConfirm={handleConfirmDelete}
-        awayTeam={deleteTarget?.awayTeam.name ?? ''}
-        homeTeam={deleteTarget?.homeTeam.name ?? ''}
+        awayTeam={deleteTarget?.awayTeam?.name || ''}
+        homeTeam={deleteTarget?.homeTeam?.name || ''}
       />
     </Layout>
   );
