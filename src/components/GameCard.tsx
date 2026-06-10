@@ -101,7 +101,7 @@ export default function GameCard({ game, index, isHovered, onHover, bestWorstMap
       <div
         className={cn(
           'grid transition-colors duration-150',
-          isHovered ? 'bg-[#EBF0FE]' : 'bg-white'
+          isHovered ? 'bg-gray-100' : 'bg-white'
         )}
         style={{ gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px 90px' }}
       >
@@ -206,7 +206,7 @@ export default function GameCard({ game, index, isHovered, onHover, bestWorstMap
       <div
         className={cn(
           'grid transition-colors duration-150',
-          isHovered ? 'bg-[#EBF0FE]' : 'bg-[#F8FAFC]',
+          isHovered ? 'bg-gray-100' : 'bg-[#F8FAFC]',
         )}
         style={{
           gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px 90px',

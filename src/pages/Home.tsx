@@ -400,7 +400,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                           <>
                             {/* Column headers for single sport */}
                             <div
-                              className="grid border-b border-gray-200 bg-white"
+                              className="grid border-b border-gray-300 bg-gray-200 rounded-t-lg"
                               style={{
                                 gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px',
                               }}
@@ -411,7 +411,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                                   <div
                                     key={col.key}
                                     className={cn(
-                                      'px-2 py-1.5 text-gray-500 font-semibold text-xs uppercase tracking-wider whitespace-nowrap flex items-center',
+                                      'px-2 py-2 text-gray-800 font-black text-xs uppercase tracking-wider whitespace-nowrap flex items-center',
                                       col.align === 'center' && 'justify-center',
                                       col.align === 'right' && 'justify-end',
                                       col.align === 'left' && 'justify-start'
