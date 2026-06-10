@@ -37,23 +37,13 @@ import {
 import Layout from '@/components/Layout';
 import { useGames } from '@/hooks/useGames';
 import type { Game, Sport, GameStatus } from '@/types/game';
+import { useLanguage } from '@/i18n/LanguageContext';
 import StatsCards from '@/components/admin/StatsCards';
 import GameModal from '@/components/admin/GameModal';
 import DeleteConfirmModal from '@/components/admin/DeleteConfirmModal';
 
 const SPORTS: (Sport | 'All')[] = ['All', 'MLB', 'NBA', 'NFL', 'NHL', 'Soccer', 'Tennis'];
-const STATUS_FILTERS = ['All', 'Scheduled', 'Live', 'Final', 'Postponed'];
 const PAGE_SIZE = 10;
-
-const statusLabel = (s: GameStatus): string => {
-  switch (s) {
-    case 'scheduled': return 'Scheduled';
-    case 'live': return 'Live';
-    case 'final': return 'Final';
-    case 'postponed': return 'Postponed';
-    default: return s;
-  }
-};
 
 const statusBadgeStyle = (s: GameStatus) => {
   switch (s) {
@@ -84,6 +74,7 @@ const sportBadgeStyle = (sport: Sport) => {
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { lang, t } = useLanguage();
   const isAuthenticated = localStorage.getItem('quickline-admin-auth') === 'true';
 
   const {
@@ -115,6 +106,34 @@ export default function Admin() {
   const [deleteTarget, setDeleteTarget] = useState<Game | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Status filters with i18n labels
+  const STATUS_FILTERS: { value: string; label: string }[] = [
+    { value: 'All', label: t.all },
+    { value: t.scheduled, label: t.scheduled },
+    { value: t.live, label: t.live },
+    { value: t.final, label: t.final },
+    { value: t.postponed, label: t.postponed },
+  ];
+
+  // Sort options with i18n
+  const SORT_OPTIONS: { value: string; label: string }[] = [
+    { value: 'date', label: t.time },
+    { value: 'sport', label: t.sport },
+    { value: 'status', label: t.status },
+    { value: 'team', label: t.team },
+  ];
+
+  // Status label helper using i18n
+  const getStatusLabel = (s: GameStatus): string => {
+    switch (s) {
+      case 'scheduled': return t.scheduled;
+      case 'live': return t.live;
+      case 'final': return t.final;
+      case 'postponed': return t.postponed;
+      default: return s;
+    }
+  };
+
   // Filtered & sorted games
   const filteredGames = useMemo(() => {
     let list = [...games];
@@ -126,7 +145,7 @@ export default function Admin() {
 
     // Status filter
     if (statusFilter !== 'All') {
-      list = list.filter(g => statusLabel(g.status) === statusFilter);
+      list = list.filter(g => getStatusLabel(g.status) === statusFilter);
     }
 
     // Search
@@ -185,10 +204,10 @@ export default function Admin() {
   const handleSaveGame = (game: Game) => {
     if (editGame) {
       updateGame(game.id, game);
-      toast.success('Game updated successfully');
+      toast.success(lang === 'es' ? 'Juego actualizado' : 'Game updated successfully');
     } else {
       addGame(game);
-      toast.success('Game added successfully');
+      toast.success(lang === 'es' ? 'Juego agregado' : 'Game added successfully');
     }
   };
 
@@ -203,7 +222,7 @@ export default function Admin() {
     // Small delay for visual feedback
     setTimeout(() => {
       deleteGame(deleteTarget.id);
-      toast.success('Game deleted');
+      toast.success(lang === 'es' ? 'Juego eliminado' : 'Game deleted');
       setDeletingId(null);
       setDeleteTarget(null);
     }, 250);
@@ -211,17 +230,17 @@ export default function Admin() {
 
   const handleMoveUp = (id: string) => {
     moveGameUp(id);
-    toast.success('Game moved up');
+    toast.success(lang === 'es' ? 'Juego movido arriba' : 'Game moved up');
   };
 
   const handleMoveDown = (id: string) => {
     moveGameDown(id);
-    toast.success('Game moved down');
+    toast.success(lang === 'es' ? 'Juego movido abajo' : 'Game moved down');
   };
 
   const handleSignOut = () => {
     localStorage.removeItem('quickline-admin-auth');
-    toast.success('Logged out successfully');
+    toast.success(lang === 'es' ? 'Sesión cerrada' : 'Logged out successfully');
     navigate('/login');
   };
 
@@ -265,7 +284,7 @@ export default function Admin() {
     a.download = `nmv-sports-games-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('CSV exported');
+    toast.success(lang === 'es' ? 'CSV exportado' : 'CSV exported');
   };
 
   const formatGameTime = (iso: string) => {
@@ -293,7 +312,7 @@ export default function Admin() {
             <div className="flex items-center gap-2">
               <span className="text-white font-semibold text-sm">NMV SPORTS</span>
               <ChevronRightIcon size={12} className="text-gray-500" />
-              <span className="text-gray-300 text-sm font-medium">Dashboard</span>
+              <span className="text-gray-300 text-sm font-medium">{t.dashboard}</span>
             </div>
             <span
               className="text-[10px] font-bold uppercase ml-1 px-1.5 py-0.5 rounded"
@@ -306,7 +325,7 @@ export default function Admin() {
             <button
               onClick={resetToDefault}
               className="text-gray-400 hover:text-white transition-colors p-1.5 rounded-md hover:bg-white/5"
-              title="Reset data"
+              title={t.refresh}
             >
               <RefreshCw size={16} />
             </button>
@@ -322,7 +341,7 @@ export default function Admin() {
               className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs font-medium p-1.5 rounded-md hover:bg-white/5"
             >
               <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">{t.logout}</span>
             </button>
           </div>
         </div>
@@ -336,8 +355,8 @@ export default function Admin() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <h1 className="text-xl font-semibold text-gray-900">Games Management</h1>
-            <p className="text-xs text-gray-400 -mt-0.5">Manage betting lines across all sports</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t.dashboard}</h1>
+            <p className="text-xs text-gray-400 -mt-0.5">NMV SPORTS - {t.liveOdds}</p>
           </motion.div>
           <motion.div
             className="flex items-center gap-2"
@@ -352,7 +371,7 @@ export default function Admin() {
               style={{ backgroundColor: '#1A56DB' }}
             >
               <Plus size={16} />
-              <span className="hidden sm:inline">Add Game</span>
+              <span className="hidden sm:inline">{t.addGame}</span>
             </Button>
             <Button
               variant="outline"
@@ -366,7 +385,7 @@ export default function Admin() {
             <button
               onClick={resetToDefault}
               className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              title="Refresh"
+              title={t.refresh}
             >
               <RefreshCw size={16} />
             </button>
@@ -388,10 +407,9 @@ export default function Admin() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date">Sort by Date</SelectItem>
-                  <SelectItem value="sport">Sort by Sport</SelectItem>
-                  <SelectItem value="status">Sort by Status</SelectItem>
-                  <SelectItem value="team">Sort by Team</SelectItem>
+                  {SORT_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -402,7 +420,7 @@ export default function Admin() {
                 </SelectTrigger>
                 <SelectContent>
                   {SPORTS.map(s => (
-                    <SelectItem key={s} value={s}>{s === 'All' ? 'All Sports' : s}</SelectItem>
+                    <SelectItem key={s} value={s}>{s === 'All' ? t.all : s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -414,7 +432,7 @@ export default function Admin() {
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_FILTERS.map(s => (
-                    <SelectItem key={s} value={s}>{s === 'All' ? 'All Status' : s}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -424,7 +442,7 @@ export default function Admin() {
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <Input
-                placeholder="Search teams..."
+                placeholder={t.searchTeams}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="h-9 pl-9 w-full sm:w-[240px] text-sm"
@@ -441,14 +459,14 @@ export default function Admin() {
               <thead>
                 <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
                   <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 w-[50px]">#</th>
-                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 w-[80px]">Sport</th>
-                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 w-[160px]">Game Time</th>
-                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 min-w-[240px]">Away @ Home</th>
-                  <th className="py-2 px-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 w-[100px]">M.L.</th>
-                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[70px]">Total</th>
-                  <th className="py-2 px-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 w-[90px]">O/U</th>
-                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[100px]">Status</th>
-                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[140px]">Actions</th>
+                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 w-[80px]">{t.sport}</th>
+                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 w-[160px]">{t.time}</th>
+                  <th className="py-2 px-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 min-w-[240px]">{t.team}</th>
+                  <th className="py-2 px-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 w-[100px]">{t.ml}</th>
+                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[70px]">{t.total}</th>
+                  <th className="py-2 px-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 w-[90px]">{t.overUnder}</th>
+                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[100px]">{t.status}</th>
+                  <th className="py-2 px-3 text-center text-xs font-medium uppercase tracking-wider text-gray-600 w-[140px]">{t.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -525,7 +543,7 @@ export default function Admin() {
                             {game.status === 'live' && (
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                             )}
-                            {statusLabel(game.status)}
+                            {getStatusLabel(game.status)}
                           </span>
                         </td>
                         <td className="py-2 px-3">
@@ -533,7 +551,7 @@ export default function Admin() {
                             <button
                               onClick={() => handleEdit(game)}
                               className="p-1.5 rounded-md text-gray-400 hover:text-[#1A56DB] hover:bg-gray-100 transition-colors"
-                              title="Edit"
+                              title={t.editGame}
                             >
                               <Pencil size={14} />
                             </button>
@@ -556,7 +574,7 @@ export default function Admin() {
                             <button
                               onClick={() => handleDeleteClick(game)}
                               className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                              title="Delete"
+                              title={t.deleteGame}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -606,7 +624,7 @@ export default function Admin() {
                         {game.status === 'live' && (
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         )}
-                        {statusLabel(game.status)}
+                        {getStatusLabel(game.status)}
                       </span>
                     </div>
                     <div className="text-sm font-medium text-gray-900 mb-2">
@@ -656,15 +674,14 @@ export default function Admin() {
           {paginatedGames.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16">
               <Inbox size={48} className="text-gray-300 mb-4" />
-              <p className="text-base font-medium text-gray-500">No games found</p>
-              <p className="text-sm text-gray-400 mt-1">Try adjusting your filters or add a new game</p>
+              <p className="text-base font-medium text-gray-500">{t.noGamesFound}</p>
               <Button
                 className="mt-4"
                 style={{ backgroundColor: '#1A56DB' }}
                 onClick={handleAdd}
               >
                 <Plus size={16} className="mr-1" />
-                Add Game
+                {t.addGame}
               </Button>
             </div>
           )}
@@ -674,7 +691,7 @@ export default function Admin() {
         {filteredGames.length > PAGE_SIZE && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-xs text-gray-500">
-              Showing {(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, filteredGames.length)} of {filteredGames.length} games
+              {(safePage - 1) * PAGE_SIZE + 1}-{Math.min(safePage * PAGE_SIZE, filteredGames.length)} / {filteredGames.length}
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -710,20 +727,19 @@ export default function Admin() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Game Modal */}
       <GameModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditGame(null); }}
+        game={editGame}
         onSave={handleSaveGame}
-        editGame={editGame}
       />
 
+      {/* Delete Confirm Modal */}
       <DeleteConfirmModal
         open={deleteOpen}
         onClose={() => { setDeleteOpen(false); setDeleteTarget(null); }}
         onConfirm={handleConfirmDelete}
-        awayTeam={deleteTarget?.awayTeam.name || ''}
-        homeTeam={deleteTarget?.homeTeam.name || ''}
       />
     </Layout>
   );

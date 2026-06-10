@@ -1,15 +1,17 @@
 import { Link } from 'react-router-dom';
 import { LogoIcon } from './icons/SportIcons';
-
-const quickLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Live Odds', href: '/' },
-  { label: 'Scores', href: '#' },
-  { label: 'Trends', href: '#' },
-  { label: 'Admin', href: '/login' },
-];
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
+  const quickLinks = [
+    { label: 'Home', href: '/' },
+    { label: t.liveOdds, href: '/' },
+    { label: t.scores, href: '/scores' },
+    { label: t.admin, href: '/login' },
+  ];
+
   return (
     <footer
       className="border-t"
@@ -24,7 +26,7 @@ export default function Footer() {
               <span className="text-white text-lg font-bold">NMV SPORTS</span>
             </div>
             <p className="mt-2 text-sm text-gray-400">
-              Live Sports Betting Lines -- MLB, NBA, NFL, NHL, Soccer & Tennis.
+              {t.liveOdds} -- MLB, NBA, NFL, NHL, Soccer & Tennis.
             </p>
             <p className="mt-4 text-xs text-gray-500">
               &copy; 2025 NMV SPORTS. All rights reserved.

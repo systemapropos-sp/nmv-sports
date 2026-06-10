@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
+import { LanguageProvider } from './i18n/LanguageContext'
 import './index.css'
 import App from './App.tsx'
 
@@ -14,6 +15,8 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <HashRouter>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </HashRouter>,
 )

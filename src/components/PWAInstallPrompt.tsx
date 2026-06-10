@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -8,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function PWAInstallPrompt() {
+  const { t } = useLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -39,12 +41,12 @@ export default function PWAInstallPrompt() {
       <div className="flex items-center gap-3">
         <img src="/icon-72.png" alt="NMV SPORTS" className="w-12 h-12 rounded-lg" />
         <div className="flex-1">
-          <p className="font-semibold text-sm text-gray-900">Install NMV SPORTS</p>
-          <p className="text-xs text-gray-500">Add to your home screen for quick access</p>
+          <p className="font-semibold text-sm text-gray-900">{t.installApp}</p>
+          <p className="text-xs text-gray-500">{t.addToHome}</p>
         </div>
         <Button onClick={handleInstall} size="sm" className="bg-[#0C1B2E] hover:bg-[#1A56DB] text-white shrink-0">
           <Download size={14} className="mr-1" />
-          Install
+          {t.install}
         </Button>
       </div>
     </div>

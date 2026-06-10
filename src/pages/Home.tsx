@@ -16,6 +16,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { useGames } from '@/hooks/useGames';
 import type { Sport, DateFilter, Game } from '@/types/game';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/i18n/LanguageContext';
 import {
   MlbIcon,
   NbaIcon,
@@ -30,33 +31,18 @@ import GameCard from '@/components/GameCard';
 
 const SPORT_ORDER: Sport[] = ['MLB', 'NBA', 'NFL', 'NHL', 'Soccer', 'Tennis'];
 
-const sports: { key: Sport | 'All' | 'My Sports'; label: string; Icon: React.FC<{ className?: string; size?: number }> }[] = [
-  { key: 'All', label: 'ALL', Icon: LayoutGrid },
-  { key: 'My Sports', label: 'MY SPORTS', Icon: LayoutGrid },
-  { key: 'MLB', label: 'MLB', Icon: MlbIcon },
-  { key: 'NBA', label: 'NBA', Icon: NbaIcon },
-  { key: 'NFL', label: 'NFL', Icon: NflIcon },
-  { key: 'NHL', label: 'NHL', Icon: NhlIcon },
-  { key: 'Soccer', label: 'SOCCER', Icon: SoccerIcon },
-  { key: 'Tennis', label: 'TENNIS', Icon: TennisIcon },
-];
-
-const dateFilters: { key: DateFilter; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'tomorrow', label: 'Tomorrow' },
-  { key: 'week', label: 'Week' },
-];
+const dateFiltersKeys: DateFilter[] = ['today', 'tomorrow', 'week'];
 
 const tableColumns = [
-  { key: 'gameInfo', label: 'GAME', width: '200px', align: 'left' as const },
-  { key: 'rot', label: 'ROT#', width: '70px', align: 'center' as const },
-  { key: 'ml', label: 'M.L.', width: '90px', align: 'right' as const },
-  { key: 'total', label: 'TOTAL', width: '90px', align: 'center' as const },
-  { key: 'ou', label: 'O/U', width: '90px', align: 'right' as const },
-  { key: 'rl', label: 'RL', width: '90px', align: 'right' as const },
-  { key: 'yn', label: 'Y-N', width: '90px', align: 'right' as const },
-  { key: 'srl', label: 'SRL', width: '90px', align: 'right' as const },
-  { key: 'solo', label: 'SOLO', width: '90px', align: 'right' as const },
+  { key: 'code', label: 'code', width: '70px', align: 'center' as const },
+  { key: 'gameInfo', label: 'game', width: '200px', align: 'left' as const },
+  { key: 'ml', label: 'ml', width: '90px', align: 'right' as const },
+  { key: 'total', label: 'total', width: '90px', align: 'center' as const },
+  { key: 'ou', label: 'overUnder', width: '90px', align: 'right' as const },
+  { key: 'rl', label: 'rl', width: '90px', align: 'right' as const },
+  { key: 'yn', label: 'yn', width: '90px', align: 'right' as const },
+  { key: 'srl', label: 'srl', width: '90px', align: 'right' as const },
+  { key: 'solo', label: 'solo', width: '90px', align: 'right' as const },
 ];
 
 const columnTooltips: Record<string, string> = {
@@ -101,6 +87,7 @@ interface HomeProps {
 }
 
 export default function Home({ searchQuery = '' }: HomeProps) {
+  const { lang, t } = useLanguage();
   const { games, getGameCountBySport } = useGames();
   const [activeSport, setActiveSport] = useState<Sport | 'All' | 'My Sports'>('All');
   const [activeDate, setActiveDate] = useState<DateFilter>('today');
@@ -261,6 +248,28 @@ export default function Home({ searchQuery = '' }: HomeProps) {
     return getGameCountBySport(key);
   };
 
+  // Date filter labels with i18n
+  const getDateLabel = (key: DateFilter) => {
+    switch (key) {
+      case 'today': return t.today;
+      case 'tomorrow': return t.tomorrow;
+      case 'week': return t.week;
+      default: return key;
+    }
+  };
+
+  // Build sports array with dynamic labels
+  const sportsTabs: { key: Sport | 'All' | 'My Sports'; label: string; Icon: React.FC<{ className?: string; size?: number }> }[] = [
+    { key: 'All', label: t.all, Icon: LayoutGrid },
+    { key: 'My Sports', label: t.mySports, Icon: LayoutGrid },
+    { key: 'MLB', label: 'MLB', Icon: MlbIcon },
+    { key: 'NBA', label: 'NBA', Icon: NbaIcon },
+    { key: 'NFL', label: 'NFL', Icon: NflIcon },
+    { key: 'NHL', label: 'NHL', Icon: NhlIcon },
+    { key: 'Soccer', label: 'SOCCER', Icon: SoccerIcon },
+    { key: 'Tennis', label: 'TENNIS', Icon: TennisIcon },
+  ];
+
   return (
     <div className="flex flex-col">
       {/* Sub-Navigation */}
@@ -271,7 +280,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
         <div className="max-w-[1440px] mx-auto px-4">
           {/* Row 1: Sport Tabs */}
           <div className="flex items-center gap-1 h-11 overflow-x-auto scrollbar-hide">
-            {sports.map((sport) => {
+            {sportsTabs.map((sport) => {
               const count = getTabCount(sport.key);
               const isActive = activeSport === sport.key;
               return (
@@ -303,8 +312,8 @@ export default function Home({ searchQuery = '' }: HomeProps) {
             <button
               onClick={() => setSportSelectorOpen(true)}
               className="ml-1 p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
-              title="Select favorite sports"
-              aria-label="Select favorite sports"
+              title={t.selectSports}
+              aria-label={t.selectSports}
             >
               <Settings size={16} />
             </button>
@@ -313,12 +322,12 @@ export default function Home({ searchQuery = '' }: HomeProps) {
           {/* Row 2: Date Tabs + Game Count */}
           <div className="flex items-center justify-between h-11 border-t border-gray-100">
             <div className="flex items-center">
-              {dateFilters.map((df) => {
-                const isActive = activeDate === df.key;
+              {dateFiltersKeys.map((dfKey) => {
+                const isActive = activeDate === dfKey;
                 return (
                   <button
-                    key={df.key}
-                    onClick={() => setActiveDate(df.key)}
+                    key={dfKey}
+                    onClick={() => setActiveDate(dfKey)}
                     className={cn(
                       'flex items-center gap-1 px-4 py-2 text-xs font-medium transition-all duration-150',
                       isActive
@@ -326,8 +335,8 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                         : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
                     )}
                   >
-                    {df.label}
-                    {isActive && df.key === 'today' && (
+                    {getDateLabel(dfKey)}
+                    {isActive && dfKey === 'today' && (
                       <span className="relative flex h-2 w-2 ml-1">
                         <span className="animate-live-pulse absolute inline-flex h-full w-full rounded-full bg-green opacity-75" />
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green" />
@@ -338,7 +347,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
               })}
             </div>
             <span className="text-[0.6875rem] text-gray-400 pr-2">
-              Showing {filteredGames.length} games
+              {filteredGames.length} {lang === 'es' ? 'juegos' : 'games'}
             </span>
           </div>
         </div>
@@ -352,36 +361,39 @@ export default function Home({ searchQuery = '' }: HomeProps) {
             <div className="bg-white rounded-lg shadow-table overflow-hidden" style={{ minHeight: '400px' }}>
               {/* Column headers */}
               <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
-                  {/* Table Header */}
+                <div className="min-w-[900px]">
+                  {/* Sticky Table Header with CÓDIGO column */}
                   <div
-                    className="grid bg-gray-100 border-b-2 border-gray-200"
+                    className="odds-header grid sticky top-0 z-30 border-b-2 border-gray-200"
                     style={{
-                      gridTemplateColumns: '200px 70px 90px 90px 90px 90px 90px 90px 90px',
+                      gridTemplateColumns: '70px 200px 90px 90px 90px 90px 90px 90px 90px',
                       height: '40px',
                     }}
                   >
-                    {tableColumns.map((col) => (
-                      <div
-                        key={col.key}
-                        className={cn(
-                          'py-2 px-3 text-[0.6875rem] font-medium uppercase tracking-wider text-gray-600 whitespace-nowrap flex items-center',
-                          col.align === 'center' && 'justify-center',
-                          col.align === 'right' && 'justify-end',
-                          col.align === 'left' && 'justify-start'
-                        )}
-                        style={{ width: col.width, letterSpacing: '0.05em' }}
-                      >
-                        <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
-                          {col.label}
-                          {columnTooltips[col.key] && (
-                            <span title={columnTooltips[col.key]} className="cursor-help text-gray-400 hover:text-gray-600">
-                              <Info size={12} />
-                            </span>
+                    {tableColumns.map((col) => {
+                      const colLabel = (t as Record<string, string>)[col.label] || col.label;
+                      return (
+                        <div
+                          key={col.key}
+                          className={cn(
+                            'odds-header whitespace-nowrap flex items-center',
+                            col.align === 'center' && 'justify-center',
+                            col.align === 'right' && 'justify-end',
+                            col.align === 'left' && 'justify-start'
                           )}
+                          style={{ width: col.width }}
+                        >
+                          <div className={cn('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
+                            {colLabel}
+                            {columnTooltips[col.key] && (
+                              <span title={columnTooltips[col.key]} className="cursor-help text-gray-400 hover:text-gray-600">
+                                <Info size={12} />
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Game content */}
@@ -400,8 +412,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                           <circle cx="80" cy="85" r="14" stroke="currentColor" strokeWidth="2" />
                           <path d="M73 85h14M80 78v14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
-                        <p className="text-base text-gray-500 font-medium">No games match your filters</p>
-                        <p className="text-sm text-gray-400">Try adjusting your sport or date selection</p>
+                        <p className="text-base text-gray-500 font-medium">{t.noGamesFound}</p>
                       </motion.div>
                     ) : (
                       <div className="p-2">
@@ -453,11 +464,11 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <QrCode size={18} className="text-blue" />
-                    <h3 className="text-base font-semibold">Share NMV SPORTS</h3>
+                    <h3 className="text-base font-semibold">{t.share}</h3>
                   </div>
-                  <p className="text-xs text-gray-400 mb-3">Scan to view on mobile</p>
+                  <p className="text-xs text-gray-400 mb-3">{t.qrCode}</p>
 
-                  <label className="block text-[0.6875rem] font-medium text-gray-600 mb-1">Page URL</label>
+                  <label className="block text-[0.6875rem] font-medium text-gray-600 mb-1">URL</label>
                   <input
                     type="text"
                     value={qrUrl}
@@ -470,7 +481,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                     className="w-full h-10 bg-blue text-white rounded-md text-sm font-medium hover:bg-blue-hover transition-all duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5 mb-3"
                   >
                     <RefreshCw size={14} />
-                    {qrGenerated ? 'Regenerate QR Code' : 'Generate QR Code'}
+                    {qrGenerated ? t.refresh : t.generate}
                   </button>
 
                   <div
@@ -489,7 +500,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                         <QRCodeCanvas value={qrUrl} size={180} level="M" />
                       </motion.div>
                     ) : (
-                      <span className="text-xs text-gray-400">QR code will appear here</span>
+                      <span className="text-xs text-gray-400">{t.qrCode}</span>
                     )}
                   </div>
 
@@ -502,7 +513,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                       className="w-full h-9 mt-3 text-gray-600 bg-gray-100 rounded-md text-sm font-medium hover:bg-gray-200 transition-all duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
                     >
                       <Download size={14} />
-                      Download PNG
+                      PNG
                     </motion.button>
                   )}
                 </motion.div>
@@ -516,9 +527,9 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <LinkIcon size={18} className="text-blue" />
-                    <h3 className="text-base font-semibold">Short Link</h3>
+                    <h3 className="text-base font-semibold">{t.shortLink}</h3>
                   </div>
-                  <p className="text-xs text-gray-400 mb-3">Quick shareable URL</p>
+                  <p className="text-xs text-gray-400 mb-3">{t.shortLink}</p>
 
                   <div className="flex items-center border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
                     <span className="text-sm font-semibold text-blue tabular-nums flex-1">{shortLink}</span>
@@ -536,7 +547,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                     className="w-full h-9 mt-3 text-gray-600 text-sm font-medium hover:bg-gray-100 rounded-md transition-all duration-150 active:scale-[0.97] flex items-center justify-center gap-1.5"
                   >
                     <RefreshCw size={14} />
-                    Generate New Link
+                    {t.generate}
                   </button>
                 </motion.div>
 
@@ -549,25 +560,22 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <SlidersHorizontal size={18} className="text-blue" />
-                    <h3 className="text-base font-semibold">Quick Filters</h3>
+                    <h3 className="text-base font-semibold">{t.odds}</h3>
                   </div>
 
                   <div className="flex flex-col gap-3">
                     <ToggleRow
-                      label="Best Odds Only"
-                      subLabel="Highlight top value"
+                      label={t.showBestOdds}
                       checked={bestOddsOnly}
                       onChange={() => handleToggle(setBestOddsOnly)}
                     />
                     <ToggleRow
-                      label="Hide Finished"
-                      subLabel="Remove completed games"
+                      label={t.hideFinished}
                       checked={hideFinished}
                       onChange={() => handleToggle(setHideFinished)}
                     />
                     <ToggleRow
-                      label="Live Only"
-                      subLabel="In-progress games"
+                      label={t.showLiveOnly}
                       checked={liveOnly}
                       onChange={() => handleToggle(setLiveOnly)}
                       showLiveDot
@@ -578,7 +586,7 @@ export default function Home({ searchQuery = '' }: HomeProps) {
                     onClick={resetFilters}
                     className="mt-3 text-sm text-gray-600 font-medium hover:bg-gray-100 rounded-md px-3 py-1.5 transition-all duration-150"
                   >
-                    Reset All
+                    {t.cancel}
                   </button>
                 </motion.div>
               </div>
@@ -602,13 +610,11 @@ export default function Home({ searchQuery = '' }: HomeProps) {
 
 function ToggleRow({
   label,
-  subLabel,
   checked,
   onChange,
   showLiveDot = false,
 }: {
   label: string;
-  subLabel: string;
   checked: boolean;
   onChange: () => void;
   showLiveDot?: boolean;
@@ -624,7 +630,6 @@ function ToggleRow({
         )}
         <div className="min-w-0">
           <p className="text-sm font-medium text-gray-700">{label}</p>
-          <p className="text-[0.6875rem] text-gray-400">{subLabel}</p>
         </div>
       </div>
       <button

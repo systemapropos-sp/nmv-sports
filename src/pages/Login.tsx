@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/icons/SportIcons';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                  */
@@ -91,7 +92,7 @@ const footerAnim = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Validation                                                         */
+/*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
 interface FieldErrors {
@@ -99,26 +100,8 @@ interface FieldErrors {
   password?: string;
 }
 
-function validateForm(username: string, password: string): FieldErrors {
-  const errors: FieldErrors = {};
-  if (!username.trim()) {
-    errors.username = 'Username is required';
-  } else if (username.trim().length < 3) {
-    errors.username = 'Username must be at least 3 characters';
-  }
-  if (!password) {
-    errors.password = 'Password is required';
-  } else if (password.length < 3) {
-    errors.password = 'Password must be at least 3 characters';
-  }
-  return errors;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
-
 export default function Login() {
+  const { lang, t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [username, setUsername] = useState('');
@@ -148,6 +131,22 @@ export default function Login() {
     setShakeKey((k) => k + 1);
   }, []);
 
+  /* Validation */
+  const validateForm = useCallback((u: string, p: string): FieldErrors => {
+    const errors: FieldErrors = {};
+    if (!u.trim()) {
+      errors.username = `${t.username} ${lang === 'es' ? 'es requerido' : 'is required'}`;
+    } else if (u.trim().length < 3) {
+      errors.username = lang === 'es' ? 'Mínimo 3 caracteres' : 'Must be at least 3 characters';
+    }
+    if (!p) {
+      errors.password = `${t.password} ${lang === 'es' ? 'es requerida' : 'is required'}`;
+    } else if (p.length < 3) {
+      errors.password = lang === 'es' ? 'Mínimo 3 caracteres' : 'Must be at least 3 characters';
+    }
+    return errors;
+  }, [lang, t.username, t.password]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -176,7 +175,7 @@ export default function Login() {
         const redirect = searchParams.get('redirect');
         navigate(redirect || '/admin');
       } else {
-        setFormError('Invalid username or password. Please try again.');
+        setFormError(lang === 'es' ? 'Usuario o contraseña inválidos.' : 'Invalid username or password. Please try again.');
         setPassword('');
         triggerShake();
       }
@@ -240,7 +239,7 @@ export default function Login() {
                 size={16}
                 className="transition-transform duration-150 group-hover:-translate-x-0.5"
               />
-              <span>Back to Site</span>
+              <span>{t.backToSite}</span>
             </Link>
           </motion.div>
         </div>
@@ -292,7 +291,7 @@ export default function Login() {
                     className="text-2xl font-bold text-[#0A0A0A] mb-2"
                     style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.2 }}
                   >
-                    Admin Access
+                    {t.loginTitle}
                   </motion.h1>
 
                   {/* Subtitle */}
@@ -301,7 +300,7 @@ export default function Login() {
                     className="text-sm text-[#94A3B8]"
                     style={{ fontSize: '0.875rem', lineHeight: 1.5 }}
                   >
-                    Enter your credentials to manage games
+                    {t.loginSubtitle}
                   </motion.p>
                 </div>
 
@@ -314,7 +313,7 @@ export default function Login() {
                       className="block text-[0.6875rem] font-medium uppercase text-[#475569] mb-1.5"
                       style={{ letterSpacing: '0.05em' }}
                     >
-                      Username
+                      {t.username}
                     </Label>
                     <div className="relative">
                       <User
@@ -331,7 +330,7 @@ export default function Login() {
                             setFieldErrors((prev) => ({ ...prev, username: undefined }));
                           }
                         }}
-                        placeholder="Enter username"
+                        placeholder={t.username}
                         autoComplete="username"
                         className={cn(
                           'h-11 pl-10 pr-3 py-2 text-sm text-[#0A0A0A] placeholder:text-[#94A3B8]',
@@ -366,7 +365,7 @@ export default function Login() {
                       className="block text-[0.6875rem] font-medium uppercase text-[#475569] mb-1.5"
                       style={{ letterSpacing: '0.05em' }}
                     >
-                      Password
+                      {t.password}
                     </Label>
                     <div className="relative">
                       <Lock
@@ -383,7 +382,7 @@ export default function Login() {
                             setFieldErrors((prev) => ({ ...prev, password: undefined }));
                           }
                         }}
-                        placeholder="Enter password"
+                        placeholder={t.password}
                         autoComplete="current-password"
                         className={cn(
                           'h-11 pl-10 pr-10 py-2 text-sm text-[#0A0A0A] placeholder:text-[#94A3B8]',
@@ -465,11 +464,11 @@ export default function Login() {
                       {loading ? (
                         <>
                           <Loader2 size={16} className="animate-spin" />
-                          <span>Signing in...</span>
+                          <span>{t.signingIn}</span>
                         </>
                       ) : (
                         <>
-                          <span>Sign In</span>
+                          <span>{t.signIn}</span>
                           <ArrowRight size={16} className="ml-1" />
                         </>
                       )}
@@ -486,14 +485,14 @@ export default function Login() {
                     className="text-[#94A3B8]"
                     style={{ fontSize: '0.75rem', lineHeight: 1.4 }}
                   >
-                    Demo: username{' '}
+                    {t.credentialsHint}{' '}
                     <code
                       className="font-mono text-[#475569] bg-[#F1F5F9] px-1.5 py-0.5 rounded-sm"
                       style={{ fontSize: '0.75rem' }}
                     >
                       admin
                     </code>{' '}
-                    / password{' '}
+                    /{' '}
                     <code
                       className="font-mono text-[#475569] bg-[#F1F5F9] px-1.5 py-0.5 rounded-sm"
                       style={{ fontSize: '0.75rem' }}
@@ -521,7 +520,7 @@ export default function Login() {
           <span className="text-xs text-[#94A3B8]">&copy; 2025</span>
           <span className="text-xs text-[#CBD5E1]">&#183;</span>
           <span className="text-xs text-[#94A3B8]">
-            For informational purposes only
+            {lang === 'es' ? 'Solo para fines informativos' : 'For informational purposes only'}
           </span>
         </div>
       </motion.footer>

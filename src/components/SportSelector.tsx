@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Sport } from '@/types/game';
+import { useLanguage } from '@/i18n/LanguageContext';
 import {
   MlbIcon,
   NbaIcon,
@@ -48,6 +49,7 @@ interface SportSelectorProps {
 }
 
 export default function SportSelector({ open, onClose, selected, onChange }: SportSelectorProps) {
+  const { t } = useLanguage();
   const [local, setLocal] = useState<Sport[]>(selected);
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function SportSelector({ open, onClose, selected, onChange }: Spo
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="text-base font-semibold text-gray-900">My Favorite Sports</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t.selectSports}</h3>
           <button
             onClick={onClose}
             className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -85,7 +87,7 @@ export default function SportSelector({ open, onClose, selected, onChange }: Spo
 
         {/* Sport Chips */}
         <div className="px-5 py-5">
-          <p className="text-sm text-gray-500 mb-4">Select the sports you want to see in &quot;My Sports&quot; view:</p>
+          <p className="text-sm text-gray-500 mb-4">{t.mySports}:</p>
           <div className="flex flex-wrap gap-2.5">
             {ALL_SPORTS.map((sport) => {
               const isSelected = local.includes(sport.key);
@@ -112,10 +114,10 @@ export default function SportSelector({ open, onClose, selected, onChange }: Spo
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
           <Button variant="outline" size="sm" onClick={onClose}>
-            Cancel
+            {t.cancel}
           </Button>
           <Button size="sm" onClick={handleSave} className="bg-[#0C1B2E] hover:bg-[#1A56DB] text-white">
-            Save Preferences
+            {t.save}
           </Button>
         </div>
       </div>
